@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import Navbar from "../components/Navbar";
 import BottomNav from "../components/BottomNav";
+import OfflineIndicator from "../components/OfflineIndicator";
 
 export default function AppLayout() {
   const { isAuthenticated, loading } = useAuth();
@@ -29,6 +30,9 @@ export default function AppLayout() {
   
   return (
     <div className="min-h-screen flex flex-col bg-invenx-light">
+      <div className="fixed top-0 right-0 p-2 z-50">
+        <OfflineIndicator />
+      </div>
       <Navbar />
       <main className="flex-1 pb-20">
         <Outlet />

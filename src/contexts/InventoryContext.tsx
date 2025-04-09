@@ -1,5 +1,8 @@
 
 import { createContext, useState, useContext, ReactNode, useEffect } from "react";
+import { OfflineStorage } from "../services/OfflineStorage";
+import { useNetworkStatus } from "../hooks/useNetworkStatus";
+import { toast } from "sonner";
 
 export interface Product {
   id: string;
@@ -33,6 +36,7 @@ interface InventoryContextType {
   incrementValue: (id: string, field: "soldIn" | "soldOut" | "damaged") => void;
   decrementValue: (id: string, field: "soldIn" | "soldOut" | "damaged") => void;
   findProductByBarcode: (barcode: string) => Product | undefined;
+  syncStatus: { isOnline: boolean; hasPendingChanges: boolean };
 }
 
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
@@ -108,15 +112,16 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isOnline, hasPendingChanges } = useNetworkStatus();
 
   useEffect(() => {
-    // Load data from localStorage or use sample data
-    const storedProducts = localStorage.getItem("invenx_products");
-    const storedHistory = localStorage.getItem("invenx_history");
+    // Load data from localStorage
+    const storedProducts = OfflineStorage.loadProducts();
+    const storedHistory = OfflineStorage.loadHistory();
     
-    if (storedProducts && storedHistory) {
-      setProducts(JSON.parse(storedProducts));
-      setHistory(JSON.parse(storedHistory));
+    if (storedProducts.length > 0 && storedHistory.length > 0) {
+      setProducts(storedProducts);
+      setHistory(storedHistory);
     } else {
       // Use sample data
       setProducts(sampleProducts);
@@ -129,10 +134,28 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   // Save to localStorage whenever data changes
   useEffect(() => {
     if (!loading) {
-      localStorage.setItem("invenx_products", JSON.stringify(products));
-      localStorage.setItem("invenx_history", JSON.stringify(history));
+      OfflineStorage.saveProducts(products);
+      OfflineStorage.saveHistory(history);
     }
   }, [products, history, loading]);
+
+  // Notify user when connection status changes
+  useEffect(() => {
+    if (isOnline) {
+      toast.success("You are back online");
+      if (hasPendingChanges) {
+        toast.info("Syncing pending changes...");
+        // Here you would implement the actual sync process if you had a backend
+        // For now, we'll just clear the pending changes
+        setTimeout(() => {
+          OfflineStorage.clearPendingSyncItems();
+          toast.success("All changes synced successfully");
+        }, 2000);
+      }
+    } else {
+      toast.warning("You are offline. Changes will be saved locally and synced when you're back online.");
+    }
+  }, [isOnline, hasPendingChanges]);
 
   const addHistoryEntry = (entry: Omit<HistoryEntry, "id" | "timestamp">) => {
     const newEntry: HistoryEntry = {
@@ -142,6 +165,15 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     };
     
     setHistory(prev => [newEntry, ...prev]);
+    
+    // Add to pending sync if offline
+    if (!isOnline) {
+      OfflineStorage.addPendingSync({
+        type: 'history',
+        action: 'add',
+        data: newEntry
+      });
+    }
   };
 
   const addProduct = (product: Omit<Product, "id" | "available" | "createdAt">) => {
@@ -161,6 +193,15 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       quantity: newProduct.soldIn,
       user: "Admin"
     });
+    
+    // Add to pending sync if offline
+    if (!isOnline) {
+      OfflineStorage.addPendingSync({
+        type: 'product',
+        action: 'add',
+        data: newProduct
+      });
+    }
   };
 
   const updateProduct = (id: string, updates: Partial<Product>) => {
@@ -170,6 +211,16 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
           const updatedProduct = { ...product, ...updates };
           // Recalculate available
           updatedProduct.available = updatedProduct.soldIn - updatedProduct.soldOut - updatedProduct.damaged;
+
+          // Add to pending sync if offline
+          if (!isOnline) {
+            OfflineStorage.addPendingSync({
+              type: 'product',
+              action: 'update',
+              data: updatedProduct
+            });
+          }
+          
           return updatedProduct;
         }
         return product;
@@ -198,6 +249,15 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         quantity: 1,
         user: "Admin"
       });
+      
+      // Add to pending sync if offline
+      if (!isOnline) {
+        OfflineStorage.addPendingSync({
+          type: 'product',
+          action: 'delete',
+          data: { id }
+        });
+      }
     }
   };
 
@@ -212,6 +272,15 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
           
           // Recalculate available
           updatedProduct.available = updatedProduct.soldIn - updatedProduct.soldOut - updatedProduct.damaged;
+          
+          // Add to pending sync if offline
+          if (!isOnline) {
+            OfflineStorage.addPendingSync({
+              type: 'product',
+              action: 'update',
+              data: updatedProduct
+            });
+          }
           
           return updatedProduct;
         }
@@ -242,6 +311,15 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
           
           // Recalculate available
           updatedProduct.available = updatedProduct.soldIn - updatedProduct.soldOut - updatedProduct.damaged;
+          
+          // Add to pending sync if offline
+          if (!isOnline) {
+            OfflineStorage.addPendingSync({
+              type: 'product',
+              action: 'update',
+              data: updatedProduct
+            });
+          }
           
           return updatedProduct;
         }
@@ -274,7 +352,8 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         deleteProduct,
         incrementValue,
         decrementValue,
-        findProductByBarcode
+        findProductByBarcode,
+        syncStatus: { isOnline, hasPendingChanges }
       }}
     >
       {children}

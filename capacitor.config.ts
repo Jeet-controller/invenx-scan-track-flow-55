@@ -7,11 +7,16 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     url: 'https://8d556669-06cd-4664-8104-d2c7cd97ece2.lovableproject.com?forceHideBadge=true',
-    cleartext: true
+    cleartext: true,
+    androidScheme: 'https'
   },
   plugins: {
     CapacitorCommunityBarcodeScanner: {
       cameraDirection: 'back'
+    },
+    // Enable app to run offline
+    WebView: {
+      allowFileAccess: true
     }
   }
 };
