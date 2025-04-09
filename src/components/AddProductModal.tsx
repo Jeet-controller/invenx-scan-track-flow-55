@@ -15,10 +15,10 @@ interface AddProductModalProps {
 export default function AddProductModal({ open, onClose }: AddProductModalProps) {
   const [name, setName] = useState("");
   const [barcode, setBarcode] = useState("");
-  const [category, setCategory] = useState("");
   const [soldIn, setSoldIn] = useState(0);
   const [soldOut, setSoldOut] = useState(0);
   const [damaged, setDamaged] = useState(0);
+  const [lowStockLimit, setLowStockLimit] = useState(10); // New state for low stock limit
   const [isScanning, setIsScanning] = useState(false);
   const { addProduct, findProductByBarcode } = useInventory();
   const { toast } = useToast();
@@ -26,10 +26,10 @@ export default function AddProductModal({ open, onClose }: AddProductModalProps)
   const resetForm = () => {
     setName("");
     setBarcode("");
-    setCategory("");
     setSoldIn(0);
     setSoldOut(0);
     setDamaged(0);
+    setLowStockLimit(10); // Reset the low stock limit
   };
   
   const handleScanBarcode = async () => {
@@ -61,10 +61,10 @@ export default function AddProductModal({ open, onClose }: AddProductModalProps)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !barcode || !category) {
+    if (!name || !barcode) {
       toast({
         title: "Error",
-        description: "Please fill in all fields",
+        description: "Please fill in all required fields",
         variant: "destructive"
       });
       return;
@@ -84,10 +84,10 @@ export default function AddProductModal({ open, onClose }: AddProductModalProps)
     addProduct({
       name,
       barcode,
-      category,
       soldIn,
       soldOut,
-      damaged
+      damaged,
+      lowStockLimit, // Add the low stock limit
     });
     
     toast({
@@ -115,7 +115,7 @@ export default function AddProductModal({ open, onClose }: AddProductModalProps)
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Product Name
+              Product Name*
             </label>
             <input
               id="name"
@@ -129,7 +129,7 @@ export default function AddProductModal({ open, onClose }: AddProductModalProps)
           
           <div>
             <label htmlFor="barcode" className="block text-sm font-medium text-gray-700 mb-1">
-              Barcode
+              Barcode*
             </label>
             <div className="flex">
               <input
@@ -152,24 +152,21 @@ export default function AddProductModal({ open, onClose }: AddProductModalProps)
           </div>
           
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-              Category
+            <label htmlFor="lowStockLimit" className="block text-sm font-medium text-gray-700 mb-1">
+              Low Stock Alert Limit
             </label>
-            <select
-              id="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+            <input
+              id="lowStockLimit"
+              type="number"
+              min="0"
+              value={lowStockLimit}
+              onChange={(e) => setLowStockLimit(parseInt(e.target.value) || 0)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-invenx-blue"
-            >
-              <option value="">Select category</option>
-              <option value="Alcohol">Alcohol</option>
-              <option value="Beer">Beer</option>
-              <option value="Wine">Wine</option>
-              <option value="Spirits">Spirits</option>
-              <option value="Non-Alcoholic">Non-Alcoholic</option>
-              <option value="Food">Food</option>
-              <option value="Other">Other</option>
-            </select>
+              placeholder="Enter low stock limit"
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              You'll be alerted when available quantity falls below this number
+            </p>
           </div>
           
           <div>

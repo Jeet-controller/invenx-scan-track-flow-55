@@ -12,7 +12,7 @@ export interface Product {
   soldOut: number;
   damaged: number;
   available: number;
-  category: string;
+  lowStockLimit: number; // New field for low stock limit
   createdAt: string;
 }
 
@@ -51,7 +51,7 @@ const sampleProducts: Product[] = [
     soldOut: 32,
     damaged: 19467694,
     available: -19155151,
-    category: "Alcohol",
+    lowStockLimit: 10,
     createdAt: new Date().toISOString()
   },
   {
@@ -62,7 +62,7 @@ const sampleProducts: Product[] = [
     soldOut: 200,
     damaged: 10,
     available: 290,
-    category: "Alcohol",
+    lowStockLimit: 50,
     createdAt: new Date().toISOString()
   },
   {
@@ -73,7 +73,7 @@ const sampleProducts: Product[] = [
     soldOut: 75,
     damaged: 5,
     available: 70,
-    category: "Alcohol",
+    lowStockLimit: 15,
     createdAt: new Date().toISOString()
   }
 ];

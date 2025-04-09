@@ -1,5 +1,5 @@
 
-import { Minus, MoreVertical, Plus } from "lucide-react";
+import { Minus, MoreVertical, Plus, BellRing } from "lucide-react";
 import { useInventory, Product } from "../contexts/InventoryContext";
 import { useState } from "react";
 import { 
@@ -23,11 +23,16 @@ export default function ProductCard({ product }: ProductCardProps) {
     soldIn: boolean;
     soldOut: boolean;
     damaged: boolean;
+    lowStockLimit: boolean;
   }>({
     soldIn: false,
     soldOut: false,
-    damaged: false
+    damaged: false,
+    lowStockLimit: false
   });
+
+  // Determine if stock is low
+  const isLowStock = product.available <= product.lowStockLimit && product.available >= 0;
 
   const handleDelete = () => {
     setIsDeleting(true);
@@ -41,14 +46,14 @@ export default function ProductCard({ product }: ProductCardProps) {
     }, 500);
   };
 
-  const handleValueChange = (field: "soldIn" | "soldOut" | "damaged", value: string) => {
+  const handleValueChange = (field: "soldIn" | "soldOut" | "damaged" | "lowStockLimit", value: string) => {
     const numValue = parseInt(value);
     if (!isNaN(numValue) && numValue >= 0) {
       updateProduct(product.id, { [field]: numValue });
     }
   };
 
-  const toggleEditMode = (field: "soldIn" | "soldOut" | "damaged") => {
+  const toggleEditMode = (field: "soldIn" | "soldOut" | "damaged" | "lowStockLimit") => {
     setEditMode(prev => ({
       ...prev,
       [field]: !prev[field]
@@ -56,7 +61,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-4">
+    <div className={`bg-white rounded-lg shadow-sm overflow-hidden mb-4 ${isLowStock ? 'border-l-4 border-amber-500' : ''}`}>
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-2xl font-semibold">{product.name}</h3>
@@ -196,14 +201,46 @@ export default function ProductCard({ product }: ProductCardProps) {
               </button>
             </div>
           </div>
+
+          <div className="flex items-center justify-between border-b pb-4">
+            <span className="text-gray-600">Low Stock Alert Limit:</span>
+            <div className="flex items-center">
+              {editMode.lowStockLimit ? (
+                <Input
+                  type="number"
+                  value={product.lowStockLimit}
+                  onChange={(e) => handleValueChange("lowStockLimit", e.target.value)}
+                  onBlur={() => toggleEditMode("lowStockLimit")}
+                  autoFocus
+                  className="mx-2 w-24 text-center"
+                  min="0"
+                />
+              ) : (
+                <span 
+                  className="mx-4 w-24 text-center cursor-pointer hover:bg-gray-50 py-1 px-2 rounded"
+                  onClick={() => toggleEditMode("lowStockLimit")}
+                >
+                  {product.lowStockLimit}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
         
         <div className="mt-4 pt-2">
           <div className="flex items-center justify-between">
             <span className="font-medium text-gray-600">Available:</span>
-            <span className={`font-bold text-xl ${product.available < 0 ? 'text-negative' : 'text-green-600'}`}>
-              {product.available}
-            </span>
+            <div className="flex items-center gap-2">
+              {isLowStock && product.available > 0 && (
+                <div className="flex items-center text-amber-500">
+                  <BellRing size={16} className="animate-pulse mr-1" />
+                  <span className="text-sm">Low Stock</span>
+                </div>
+              )}
+              <span className={`font-bold text-xl ${product.available < 0 ? 'text-negative' : product.available <= product.lowStockLimit && product.available >= 0 ? 'text-amber-500' : 'text-green-600'}`}>
+                {product.available}
+              </span>
+            </div>
           </div>
         </div>
       </div>

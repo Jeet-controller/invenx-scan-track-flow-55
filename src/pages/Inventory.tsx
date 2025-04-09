@@ -17,8 +17,7 @@ export default function Inventory() {
   const filteredProducts = searchTerm
     ? products.filter(product => 
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.barcode.includes(searchTerm) ||
-        product.category.toLowerCase().includes(searchTerm.toLowerCase())
+        product.barcode.includes(searchTerm)
       )
     : products;
   
