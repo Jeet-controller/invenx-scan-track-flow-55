@@ -9,15 +9,25 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
+import { Input } from "@/components/ui/input";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { incrementValue, decrementValue, deleteProduct } = useInventory();
+  const { incrementValue, decrementValue, updateProduct, deleteProduct } = useInventory();
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editMode, setEditMode] = useState<{
+    soldIn: boolean;
+    soldOut: boolean;
+    damaged: boolean;
+  }>({
+    soldIn: false,
+    soldOut: false,
+    damaged: false
+  });
 
   const handleDelete = () => {
     setIsDeleting(true);
@@ -29,6 +39,20 @@ export default function ProductCard({ product }: ProductCardProps) {
       });
       setIsDeleting(false);
     }, 500);
+  };
+
+  const handleValueChange = (field: "soldIn" | "soldOut" | "damaged", value: string) => {
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue >= 0) {
+      updateProduct(product.id, { [field]: numValue });
+    }
+  };
+
+  const toggleEditMode = (field: "soldIn" | "soldOut" | "damaged") => {
+    setEditMode(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
   };
 
   return (
@@ -61,17 +85,34 @@ export default function ProductCard({ product }: ProductCardProps) {
             <div className="flex items-center">
               <button 
                 onClick={() => decrementValue(product.id, "soldIn")}
-                className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full"
+                className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full active:scale-95 transition-transform"
                 disabled={product.soldIn <= 0}
               >
                 <Minus size={16} className={product.soldIn <= 0 ? "text-gray-400" : "text-gray-600"} />
               </button>
               
-              <span className="mx-4 w-24 text-center">{product.soldIn}</span>
+              {editMode.soldIn ? (
+                <Input
+                  type="number"
+                  value={product.soldIn}
+                  onChange={(e) => handleValueChange("soldIn", e.target.value)}
+                  onBlur={() => toggleEditMode("soldIn")}
+                  autoFocus
+                  className="mx-2 w-24 text-center"
+                  min="0"
+                />
+              ) : (
+                <span 
+                  className="mx-4 w-24 text-center cursor-pointer hover:bg-gray-50 py-1 px-2 rounded"
+                  onClick={() => toggleEditMode("soldIn")}
+                >
+                  {product.soldIn}
+                </span>
+              )}
               
               <button 
                 onClick={() => incrementValue(product.id, "soldIn")}
-                className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full"
+                className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full active:scale-95 transition-transform"
               >
                 <Plus size={16} className="text-gray-600" />
               </button>
@@ -83,17 +124,34 @@ export default function ProductCard({ product }: ProductCardProps) {
             <div className="flex items-center">
               <button 
                 onClick={() => decrementValue(product.id, "soldOut")}
-                className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full"
+                className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full active:scale-95 transition-transform"
                 disabled={product.soldOut <= 0}
               >
                 <Minus size={16} className={product.soldOut <= 0 ? "text-gray-400" : "text-gray-600"} />
               </button>
               
-              <span className="mx-4 w-24 text-center">{product.soldOut}</span>
+              {editMode.soldOut ? (
+                <Input
+                  type="number"
+                  value={product.soldOut}
+                  onChange={(e) => handleValueChange("soldOut", e.target.value)}
+                  onBlur={() => toggleEditMode("soldOut")}
+                  autoFocus
+                  className="mx-2 w-24 text-center"
+                  min="0"
+                />
+              ) : (
+                <span 
+                  className="mx-4 w-24 text-center cursor-pointer hover:bg-gray-50 py-1 px-2 rounded"
+                  onClick={() => toggleEditMode("soldOut")}
+                >
+                  {product.soldOut}
+                </span>
+              )}
               
               <button 
                 onClick={() => incrementValue(product.id, "soldOut")}
-                className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full"
+                className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full active:scale-95 transition-transform"
               >
                 <Plus size={16} className="text-gray-600" />
               </button>
@@ -105,17 +163,34 @@ export default function ProductCard({ product }: ProductCardProps) {
             <div className="flex items-center">
               <button 
                 onClick={() => decrementValue(product.id, "damaged")}
-                className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full"
+                className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full active:scale-95 transition-transform"
                 disabled={product.damaged <= 0}
               >
                 <Minus size={16} className={product.damaged <= 0 ? "text-gray-400" : "text-gray-600"} />
               </button>
               
-              <span className="mx-4 w-24 text-center">{product.damaged}</span>
+              {editMode.damaged ? (
+                <Input
+                  type="number"
+                  value={product.damaged}
+                  onChange={(e) => handleValueChange("damaged", e.target.value)}
+                  onBlur={() => toggleEditMode("damaged")}
+                  autoFocus
+                  className="mx-2 w-24 text-center"
+                  min="0"
+                />
+              ) : (
+                <span 
+                  className="mx-4 w-24 text-center cursor-pointer hover:bg-gray-50 py-1 px-2 rounded"
+                  onClick={() => toggleEditMode("damaged")}
+                >
+                  {product.damaged}
+                </span>
+              )}
               
               <button 
                 onClick={() => incrementValue(product.id, "damaged")}
-                className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full"
+                className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full active:scale-95 transition-transform"
               >
                 <Plus size={16} className="text-gray-600" />
               </button>

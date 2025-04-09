@@ -85,16 +85,18 @@ export default function Inventory() {
           placeholder="Search products..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-invenx-blue"
+          className="w-full pl-10 pr-16 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-invenx-blue"
         />
         
         <div className="absolute inset-y-0 right-0 flex items-center">
           <button
             onClick={handleScanBarcode}
             disabled={isScanning}
-            className="h-full px-3 text-gray-500 hover:text-invenx-blue"
+            className="h-full px-4 rounded-r-md bg-invenx-blue text-white transition-all active:scale-95 hover:bg-blue-600 disabled:bg-blue-300 disabled:text-gray-100 flex items-center gap-2"
+            aria-label="Scan Barcode"
           >
-            <Barcode size={20} />
+            <Barcode size={20} className={isScanning ? "animate-pulse" : ""} />
+            <span className="hidden sm:inline">{isScanning ? "Scanning..." : "Scan"}</span>
           </button>
         </div>
       </div>
